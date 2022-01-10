@@ -19,7 +19,7 @@
         <span class="navbar-brand mb-0 h1">Editor De Código Gráfico</span>
       </div>
     </nav>
-    
+
     <div id="main" class="container-fluid">
       <div
         class="d-flex flex-column align-items-stretch flex-shrink-0"
@@ -33,9 +33,11 @@
             <use xlink:href="#bootstrap"></use>
           </svg>
           <span class="fs-5 fw-semibold">Bloques</span>
+          
         </a>
+        <p class="mt-2 text-center">Dar click en un bloque para agregarlo</p>
         <div
-          class="list-group list-group-flush border-bottom scrollarea border border-info border-2"
+          class="list-group list-group-flush border-bottom scrollarea border border-info border-2 h-50"
         >
           <a
             v-for="bloque in bloques"
@@ -51,6 +53,15 @@
             </div>
             <div class="col-10 mb-1 small">{{bloque.descripcion}}</div>
           </a>
+        </div>
+        <div
+          class="border border-warning border-2 w-100 h-50 bg-dark p-2 overflow-auto"
+        >
+        <div class="d-grid gap-2 mb-2">
+          <button class="btn btn-success" type="button">Generar Código</button>
+        </div>
+        <code>
+        </code>
         </div>
       </div>
       <div id="drawflow" class="flex-grow-1"></div>
