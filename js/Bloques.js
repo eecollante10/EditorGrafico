@@ -1,7 +1,6 @@
 var bloques = [];
 var dataBloques = [];
 var id_inc = 1;
-var variables = {};
 
 const darBloque = function (id, titulo, icono, descripcion, entradas, salidas) {
   return {
@@ -12,6 +11,7 @@ const darBloque = function (id, titulo, icono, descripcion, entradas, salidas) {
     hijos: [],
     entradas: entradas,
     salidas: salidas,
+    esRaiz: true
   };
 };
 
@@ -30,12 +30,19 @@ const darNodo = function (data) {
 
 const AsignacionData = {
   ...darBloque(0, "Asignación", "=", "Sostiene un número o texto en una variable", 1, 0),
-  valor: "",
   nombre: "",
-  asignar: function(v){
-    console.log("asignado: " + this.nombre + " a : " +v);
-    this.valor = v;
-    variables[this.nombre] = v;
+  asignar: function (bloque) {
+    this.hijos.push(bloque);
+  },
+  darValor: function(){
+    if(this.hijos.length > 0){
+      return this.hijos[0].darValor();
+    }
+  },
+  darPython: function () {
+    if (this.hijos.length > 0) {
+      return this.nombre + " = " + this.hijos[0].darPython();
+    }
   }
 }
 
@@ -45,6 +52,13 @@ dataBloques.push(AsignacionData);
 var Asignacion = Vue.component("Asignacion", {
   data: function () {
     return bloques[bloques.length - 1];
+  },
+  computed: {
+    valor: function(){
+      if(this.hijos.length > 0){
+        return this.hijos[0].darValor();
+      } 
+    }
   },
   template: `<div>
                       <h4>{{titulo}}</h4>
@@ -58,29 +72,78 @@ var Asignacion = Vue.component("Asignacion", {
 // Variable
 //---------
 
+
+
 var Variable = Vue.component("Variable", {
+  data: function () {
+    var data = bloques[bloques.length - 1];
+    data.seleccion = "";
+    return data;
+  },
+  props: ["variables"],
+  computed: {
+    nombreVariables: function () {
+      var keys = [];
+      console.log("this parent: " + this.variables);
+      for (key in this.variables) {
+        if (this.variables.hasOwnProperty(key)) { //to be safe
+          keys.push(key);
+        }
+      }
+      return keys;
+    }
+  },
+  template: `<div>
+                      <h4>{{titulo}}</h4>
+                      <select v-model="seleccion">
+                        <option v-for="variable in nombreVariables" v-bind:value="variable">
+                          {{ variable }}
+                        </option>
+                      </select>
+                      <input type="text" df-seleccion readonly v-model="seleccion">
+                  </div>
+                  `,
+});
+
+const VariableData = {
+  ...darBloque(-2, "Variable", "var", "Sostiene una de las variables asignadas con = para usar con otros bloques", 0, 1),
+  valor: 0,
+  nombre: "",
+  darValor: function () {
+    return this.valor;
+  },
+  darPython: function () {
+    return this.nombre;
+  }
+}
+
+dataBloques.push(VariableData);
+
+//---------
+// Numero
+//---------
+
+var Numero = Vue.component("Numero", {
   data: function () {
     return bloques[bloques.length - 1];
   },
   template: `<div>
                       <h4>{{titulo}}</h4>
                       <div>
-                        <input type="text" df-valor v-if="titulo == 'Texto'">
-                        <input type="number" df-valor v-else>
+                        <input type="number" df-valor>
                       </div>
                   </div>
                   `,
 });
-
-//---------
-// Numero
-//---------
 
 const NumeroData = {
   ...darBloque(1, "Número", "º", "Sostiene un número para usarlo con otros bloques", 0, 1),
   valor: 0,
   darValor: function () {
     return parseInt(this.valor);
+  },
+  darPython: function () {
+    return this.valor;
   }
 }
 
@@ -90,10 +153,26 @@ dataBloques.push(NumeroData);
 // Texto
 //---------
 
+var Texto = Vue.component("Texto", {
+  data: function () {
+    return bloques[bloques.length - 1];
+  },
+  template: `<div>
+                      <h4>{{titulo}}</h4>
+                      <div>
+                        <input type="text" df-valor>
+                      </div>
+                  </div>
+                  `,
+});
+
 const TextoData = {
   ...darBloque(-1, "Texto", "ABC", "Sostiene texto para usarlo con otros bloques", 0, 1),
   valor: "",
-  darValor: function(){
+  darValor: function () {
+    return this.valor;
+  },
+  darPython: function () {
     return this.valor;
   }
 }
@@ -134,6 +213,11 @@ const SumaData = {
       return this.hijos[0].darValor()
     } else
       return 0;
+  },
+  darPython: function () {
+    if (this.hijos.length == 2) {
+      return this.hijos[0].darValor() + " + " + this.hijos[1].darValor();
+    }
   }
 };
 
@@ -150,6 +234,11 @@ const RestaData = {
       return this.hijos[0].darValor() - this.hijos[1].darValor();
     } else
       return 0;
+  },
+  darPython: function () {
+    if (this.hijos.length == 2) {
+      return this.hijos[0].darValor() + " - " + this.hijos[1].darValor();
+    }
   }
 };
 
@@ -166,6 +255,11 @@ const MultipData = {
       return this.hijos[0].darValor() * this.hijos[1].darValor();
     } else
       return 0;
+  },
+  darPython: function () {
+    if (this.hijos.length == 2) {
+      return this.hijos[0].darValor() + " * " + this.hijos[1].darValor();
+    }
   }
 };
 
@@ -182,6 +276,11 @@ const DivisionData = {
       return this.hijos[0].darValor() / this.hijos[1].darValor();
     } else
       return 0;
+  },
+  darPython: function () {
+    if (this.hijos.length == 2) {
+      return this.hijos[0].darValor() + " / " + this.hijos[1].darValor();
+    }
   }
 };
 
@@ -198,6 +297,11 @@ const IgualData = {
       return this.hijos[0].darValor() == this.hijos[1].darValor();
     } else
       return false;
+  },
+  darPython: function () {
+    if (this.hijos.length == 2) {
+      return this.hijos[0].darValor() + " == " + this.hijos[1].darValor();
+    }
   }
 };
 
@@ -214,6 +318,11 @@ const DiferenteData = {
       return this.hijos[0].darValor() != this.hijos[1].darValor();
     } else
       return false;
+  },
+  darPython: function () {
+    if (this.hijos.length == 2) {
+      return this.hijos[0].darValor() + " != " + this.hijos[1].darValor();
+    }
   }
 };
 
@@ -230,6 +339,11 @@ const MayorData = {
       return this.hijos[0].darValor() > this.hijos[1].darValor();
     } else
       return false;
+  },
+  darPython: function () {
+    if (this.hijos.length == 2) {
+      return this.hijos[0].darValor() + " > " + this.hijos[1].darValor();
+    }
   }
 };
 
@@ -246,6 +360,11 @@ const OrData = {
       return this.hijos[0].darValor() || this.hijos[1].darValor();
     } else
       return false;
+  },
+  darPython: function () {
+    if (this.hijos.length == 2) {
+      return this.hijos[0].darValor() + " or " + this.hijos[1].darValor();
+    }
   }
 };
 
@@ -262,6 +381,11 @@ const AndData = {
       return this.hijos[0].darValor() && this.hijos[1].darValor();
     } else
       return false;
+  },
+  darPython: function () {
+    if (this.hijos.length == 2) {
+      return this.hijos[0].darValor() + " and " + this.hijos[1].darValor();
+    }
   }
 };
 

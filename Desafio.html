@@ -58,9 +58,9 @@
           class="border border-warning border-2 w-100 h-50 bg-dark p-2 overflow-auto"
         >
         <div class="d-grid gap-2 mb-2">
-          <button class="btn btn-success" type="button">Generar Código</button>
+          <button class="btn btn-success" v-on:click="generarCodigo" type="button">Generar Código</button>
         </div>
-        <code>
+        <code v-html="codigo">
         </code>
         </div>
       </div>

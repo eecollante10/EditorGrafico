@@ -2,21 +2,27 @@ var app = new Vue({
   el: "#main",
   data: {
     bloques: dataBloques,
+    codigo: "",
+    variables: {}
   },
   mounted: function () {
     // `this` points to the vm instance
     var id = document.getElementById("drawflow");
     this.editor = new Drawflow(id, Vue, this);
     this.editor.registerNode("Asignacion", Asignacion);
-    this.editor.registerNode("Variable", Variable);
+    this.editor.registerNode("Variable", Variable, {variables: this.variables}, {});
+    this.editor.registerNode("Numero", Numero);
+    this.editor.registerNode("Texto", Texto);
     this.editor.registerNode("Operador", Operador);
     this.editor.on("connectionCreated", function (params) {
       var bloqueOut = bloques[params.output_id - 1];
       var bloqueIn = bloques[params.input_id - 1];
+      bloqueOut.esRaiz = false;
 
       switch (bloqueIn.icono) {
         case "=":
-          bloqueIn.asignar(bloqueOut.darValor());
+          bloqueIn.asignar(bloqueOut);
+          app.$set(app.variables, bloqueIn.nombre, bloqueOut.darValor());
           break;
         default:
           if (params.input_class.slice(-1) == 1) {
@@ -31,6 +37,15 @@ var app = new Vue({
     this.editor.start();
   },
   methods: {
+    generarCodigo: function(){
+      var codigo = "";
+      for(bloque of bloques){
+        if(bloque.esRaiz){
+          codigo += bloque.darPython() + " <br>";
+        }
+      }
+      this.codigo = codigo;
+    },
     crearBloque: function (bloque) {
       var data;
       var componente = "Operador";
@@ -39,13 +54,17 @@ var app = new Vue({
           data = darNodo(AsignacionData);
           componente = "Asignacion";
           break;
+        case -2:
+          data = darNodo(VariableData);
+          componente = "Variable";
+          break;
         case -1:
           data = darNodo(TextoData);
-          componente = "Variable";
+          componente = "Texto";
           break;
         case 1:
           data = darNodo(NumeroData);
-          componente = "Variable";
+          componente = "Numero";
           break;
         case 2:
           data = darNodo(SumaData);
