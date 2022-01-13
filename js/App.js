@@ -3,7 +3,7 @@ var app = new Vue({
   data: {
     bloques: dataBloques,
     codigo: "",
-    variables: {},
+    variables: [],
     nodeSelected: 0
   },
   mounted: function () {
@@ -17,19 +17,32 @@ var app = new Vue({
     this.editor.registerNode("Numero", Numero);
     this.editor.registerNode("Texto", Texto);
     this.editor.registerNode("Operador", Operador);
-    this.editor.on("nodeSelected", function(id){
+    this.editor.on("nodeSelected", function (id) {
       app.nodeSelected = id;
     });
-    this.editor.on("nodeUnselected", function(){
+    this.editor.on("nodeUnselected", function () {
       app.nodeSelected = 0;
     });
     var editor = this.editor;
-    this.editor.on("keydown", function(event){
-      if(app.nodeSelected != 0 && event.key === "Backspace"){
+    this.editor.on("keydown", function (event) {
+      if (app.nodeSelected != 0 && event.key === "Backspace") {
         editor.removeNodeId("node-" + app.nodeSelected);
-        bloques = bloques.filter(function(bloque, index, arr){ 
+        bloques = bloques.filter(function (bloque) {
+          if (bloque.id == app.nodeSelected) {
+            for (b of bloque.hijos) {
+              b.esRaiz = true;
+            }
+            if(bloque.icono == "="){
+              var index = app.variables.findIndex(function(bl){
+                return bl.id == bloque.id;
+              });
+              if(index >= 0){
+                app.variables.splice(index, 1);
+              }
+            }
+          }
           return bloque.id != app.nodeSelected;
-      });
+        });
       }
     });
     this.editor.on("connectionCreated", function (params) {
@@ -40,17 +53,17 @@ var app = new Vue({
       switch (bloqueIn.icono) {
         case "=":
           bloqueIn.asignar(bloqueOut);
-          app.$set(app.variables, bloqueIn.nombre, bloqueOut.darValor());
+          app.variables.push(bloqueIn)
+          //app.$set(app.variables, bloqueIn.nombre, bloqueIn);
           break;
         default:
           var input_class = params.input_class.slice(-1);
           if (input_class == 1) {
             bloqueIn.hijos.splice(0, 0, bloqueOut);
-          } else if(input_class == 2){
+          } else if (input_class == 2) {
             bloqueIn.hijos.splice(1, 0, bloqueOut);
-          }
-          else{
-            bloqueIn.hijos.splice(2, 0, bloqueOut); 
+          } else {
+            bloqueIn.hijos.splice(2, 0, bloqueOut);
           }
           break;
 
@@ -120,6 +133,12 @@ var app = new Vue({
           break;
         case 12:
           data = darNodo(IteData);
+          break;
+        case 13:
+          data = darNodo(ForData);
+          break;
+        case 14:
+          data = darNodo(PrintData);
           break;
       }
       this.editor.addNode(

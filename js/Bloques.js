@@ -34,8 +34,8 @@ const AsignacionData = {
   asignar: function (bloque) {
     this.hijos.push(bloque);
   },
-  darValor: function(){
-    if(this.hijos.length > 0){
+  darValor: function () {
+    if (this.hijos.length > 0) {
       return this.hijos[0].darValor();
     }
   },
@@ -54,10 +54,10 @@ var Asignacion = Vue.component("Asignacion", {
     return bloques[bloques.length - 1];
   },
   computed: {
-    valor: function(){
-      if(this.hijos.length > 0){
+    valor: function () {
+      if (this.hijos.length > 0) {
         return this.hijos[0].darValor();
-      } 
+      }
     }
   },
   template: `<div>
@@ -77,25 +77,32 @@ var Asignacion = Vue.component("Asignacion", {
 var Variable = Vue.component("Variable", {
   data: function () {
     var data = bloques[bloques.length - 1];
-    data.seleccion = "";
+    data.nombre = "";
     return data;
   },
   props: ["variables"],
   computed: {
-    nombreVariables: function () {
-      var keys = [];
-      console.log("this parent: " + this.variables);
-      for (key in this.variables) {
-        if (this.variables.hasOwnProperty(key)) { //to be safe
-          keys.push(key);
-        }
+    seleccion: function () {
+      var bloque = this.variables.find(function (element) {
+        return element.nombre == this.nombre;
+      }, this);
+      if(bloque === undefined){
+        this.valor = "";
+        this.nombre = "";
       }
-      return keys;
+      else
+        this.valor = bloque.darValor();
+      return this.valor
+    },
+    nombreVariables: function () {
+      return this.variables.map(function (element) {
+        return element.nombre;
+      });
     }
   },
   template: `<div>
                       <h4>{{titulo}}</h4>
-                      <select v-model="seleccion">
+                      <select v-model="nombre">
                         <option v-for="variable in nombreVariables" v-bind:value="variable">
                           {{ variable }}
                         </option>
@@ -108,7 +115,6 @@ var Variable = Vue.component("Variable", {
 const VariableData = {
   ...darBloque(-2, "Variable", "var", "Sostiene una de las variables asignadas con = para usar con otros bloques", 0, 1),
   valor: 0,
-  nombre: "",
   darValor: function () {
     return this.valor;
   },
@@ -173,7 +179,7 @@ const TextoData = {
     return this.valor;
   },
   darPython: function () {
-    return this.valor;
+    return '"' + this.valor + '"';
   }
 }
 
@@ -194,7 +200,7 @@ var Operador = Vue.component("Operador", {
   },
   template: `<div>
                       <h4>{{titulo}}</h4>
-                      <div><input type="text" readonly df-valor v-model="valor"></div>
+                      <div v-show="icono !== 'for'"><input type="text" readonly df-valor v-model="valor"></div>
                   </div>
                   `,
 });
@@ -400,7 +406,7 @@ const NotData = {
   darValor: function () {
     if (this.hijos.length == 1) {
       return !this.hijos[0].darValor();
-    } 
+    }
   },
   darPython: function () {
     if (this.hijos.length == 1) {
@@ -420,17 +426,16 @@ const IteData = {
   darValor: function () {
     if (this.hijos.length >= 2 && this.hijos[0].darValor()) {
       return this.hijos[1].darValor();
-    } else if(this.hijos.length == 3)
+    } else if (this.hijos.length == 3)
       return this.hijos[2].darValor();
   },
   darPython: function () {
     var resultado = "";
-    console.log("dando python: " + JSON.stringify(this.hijos));
     if (this.hijos.length >= 2) {
       resultado += "if " + this.hijos[0].darPython() + ": \n";
       resultado += "  " + this.hijos[1].darPython() + " \n";
     }
-    if(this.hijos.length == 3){
+    if (this.hijos.length == 3) {
       resultado += "else: \n  " + this.hijos[2].darPython();
     }
     return resultado;
@@ -438,3 +443,49 @@ const IteData = {
 };
 
 dataBloques.push(IteData);
+
+
+//---------
+// For
+//---------
+
+const ForData = {
+  ...darBloque(13, "for", "for", "Estructura de control", 3, 0),
+  darValor: function () {
+    if (this.hijos.length == 3) {
+      for (var i = this.hijos[0].darValor(); i < this.hijos[1].darValor(); i++) {
+        this.hijos[2].darValor();
+      }
+    }
+  },
+  darPython: function () {
+    var resultado = "";
+    if (this.hijos.length == 3) {
+      resultado += "for i in range(" + this.hijos[0].darPython() + ", " + this.hijos[1].darPython() + "):\n";
+      resultado += "  " + this.hijos[2].darPython() + " \n";
+    }
+    return resultado;
+  }
+};
+
+dataBloques.push(ForData);
+
+//---------
+// print
+//---------
+
+const PrintData = {
+  ...darBloque(14, "Decir", "print", "Imprime lo que haya en el nodo de entrada", 1, 0),
+  darValor: function () {
+    if (this.hijos.length == 1) {
+      return this.hijos[0].darValor();
+    }
+  },
+  darPython: function () {
+    if (this.hijos.length == 1) {
+      return "print( " + this.hijos[0].darPython() + " )";
+    }
+  }
+};
+
+dataBloques.push(PrintData);
