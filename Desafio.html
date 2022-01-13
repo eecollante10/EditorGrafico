@@ -55,13 +55,20 @@
           </a>
         </div>
         <div
-          class="border border-warning border-2 w-100 h-50 bg-dark p-2 overflow-auto"
+          class="d-flex flex-column border border-warning border-2 w-100 h-50 bg-dark p-2 overflow-auto"
         >
-        <div class="d-grid gap-2 mb-2">
-          <button class="btn btn-success" v-on:click="generarCodigo" type="button">Generar Código</button>
+        <div class="d-grid gap-2 mb-2 dropdown">
+          <!-- <button class="btn btn-success" v-on:click="generarCodigo" type="button">Generar Código</button> -->
+            <button class="btn btn-success text-dark dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+              Generar Código
+            </button>
+            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton1">
+              <li><a class="dropdown-item" v-on:click="generarCodigo">Python</a></li>
+              <li><a class="dropdown-item" v-on:click="generarCodigo">Swift</a></li>
+              <li><a class="dropdown-item" v-on:click="generarCodigo">Kotlin</a></li>
+            </ul>
         </div>
-        <code v-html="codigo">
-        </code>
+        <pre class="flex-grow-1 m-0"><code class="text-secondary" v-html="codigo"></code></pre>
         </div>
       </div>
       <div id="drawflow" class="flex-grow-1"></div>

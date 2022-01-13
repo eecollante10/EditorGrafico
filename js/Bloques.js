@@ -216,7 +216,7 @@ const SumaData = {
   },
   darPython: function () {
     if (this.hijos.length == 2) {
-      return this.hijos[0].darValor() + " + " + this.hijos[1].darValor();
+      return this.hijos[0].darPython() + " + " + this.hijos[1].darPython();
     }
   }
 };
@@ -237,7 +237,7 @@ const RestaData = {
   },
   darPython: function () {
     if (this.hijos.length == 2) {
-      return this.hijos[0].darValor() + " - " + this.hijos[1].darValor();
+      return this.hijos[0].darPython() + " - " + this.hijos[1].darPython();
     }
   }
 };
@@ -258,7 +258,7 @@ const MultipData = {
   },
   darPython: function () {
     if (this.hijos.length == 2) {
-      return this.hijos[0].darValor() + " * " + this.hijos[1].darValor();
+      return this.hijos[0].darPython() + " * " + this.hijos[1].darPython();
     }
   }
 };
@@ -279,7 +279,7 @@ const DivisionData = {
   },
   darPython: function () {
     if (this.hijos.length == 2) {
-      return this.hijos[0].darValor() + " / " + this.hijos[1].darValor();
+      return this.hijos[0].darPython() + " / " + this.hijos[1].darPython();
     }
   }
 };
@@ -300,7 +300,7 @@ const IgualData = {
   },
   darPython: function () {
     if (this.hijos.length == 2) {
-      return this.hijos[0].darValor() + " == " + this.hijos[1].darValor();
+      return this.hijos[0].darPython() + " == " + this.hijos[1].darPython();
     }
   }
 };
@@ -321,7 +321,7 @@ const DiferenteData = {
   },
   darPython: function () {
     if (this.hijos.length == 2) {
-      return this.hijos[0].darValor() + " != " + this.hijos[1].darValor();
+      return this.hijos[0].darPython() + " != " + this.hijos[1].darPython();
     }
   }
 };
@@ -342,7 +342,7 @@ const MayorData = {
   },
   darPython: function () {
     if (this.hijos.length == 2) {
-      return this.hijos[0].darValor() + " > " + this.hijos[1].darValor();
+      return this.hijos[0].darPython() + " > " + this.hijos[1].darPython();
     }
   }
 };
@@ -363,7 +363,7 @@ const OrData = {
   },
   darPython: function () {
     if (this.hijos.length == 2) {
-      return this.hijos[0].darValor() + " or " + this.hijos[1].darValor();
+      return this.hijos[0].darPython() + " or " + this.hijos[1].darPython();
     }
   }
 };
@@ -384,9 +384,57 @@ const AndData = {
   },
   darPython: function () {
     if (this.hijos.length == 2) {
-      return this.hijos[0].darValor() + " and " + this.hijos[1].darValor();
+      return this.hijos[0].darPython() + " and " + this.hijos[1].darPython();
     }
   }
 };
 
 dataBloques.push(AndData);
+
+//---------
+// Not
+//---------
+
+const NotData = {
+  ...darBloque(11, "Not Booleano", "!", "Invierte un valor booleano", 1, 1),
+  darValor: function () {
+    if (this.hijos.length == 1) {
+      return !this.hijos[0].darValor();
+    } 
+  },
+  darPython: function () {
+    if (this.hijos.length == 1) {
+      return "!" + this.hijos[0].darPython();
+    }
+  }
+};
+
+dataBloques.push(NotData);
+
+//---------
+// Ite
+//---------
+
+const IteData = {
+  ...darBloque(12, "if then else", "if", "Estructura de control", 3, 1),
+  darValor: function () {
+    if (this.hijos.length >= 2 && this.hijos[0].darValor()) {
+      return this.hijos[1].darValor();
+    } else if(this.hijos.length == 3)
+      return this.hijos[2].darValor();
+  },
+  darPython: function () {
+    var resultado = "";
+    console.log("dando python: " + JSON.stringify(this.hijos));
+    if (this.hijos.length >= 2) {
+      resultado += "if " + this.hijos[0].darPython() + ": \n";
+      resultado += "  " + this.hijos[1].darPython() + " \n";
+    }
+    if(this.hijos.length == 3){
+      resultado += "else: \n  " + this.hijos[2].darPython();
+    }
+    return resultado;
+  }
+};
+
+dataBloques.push(IteData);
