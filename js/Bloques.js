@@ -8,7 +8,6 @@ const darBloque = function (id, titulo, icono, descripcion, entradas, salidas) {
     titulo: titulo,
     icono: icono,
     descripcion: descripcion,
-    hijos: [],
     entradas: entradas,
     salidas: salidas,
     esRaiz: true
@@ -18,18 +17,38 @@ const darBloque = function (id, titulo, icono, descripcion, entradas, salidas) {
 const darNodo = function (data) {
   var op = {
     ...data,
-    id: id_inc++
+    id: id_inc++,
+    hijos: [],
+    nivel: 1
   };
   bloques.push(op);
   return op;
 }
 
 //---------
+// bloque de código
+//---------
+const BlockData = {
+  ...darBloque(-3, "Bloque De Código", "{}", "Puede contener varias líneas de código", 1, 1),
+  darValor: function () {},
+  darPython: function () {
+    var codigo = "";
+    for (hijo of this.hijos) {
+      codigo += indentacion(this.nivel);
+      codigo += undefined + "\n";
+    }
+    return codigo;
+  }
+};
+
+dataBloques.push(BlockData);
+
+//---------
 // Asignación
 //---------
 
 const AsignacionData = {
-  ...darBloque(0, "Asignación", "=", "Sostiene un número o texto en una variable", 1, 0),
+  ...darBloque(0, "Asignación", "=", "Sostiene un número o texto en una variable", 1, 1),
   nombre: "",
   asignar: function (bloque) {
     this.hijos.push(bloque);
@@ -86,11 +105,10 @@ var Variable = Vue.component("Variable", {
       var bloque = this.variables.find(function (element) {
         return element.nombre == this.nombre;
       }, this);
-      if(bloque === undefined){
+      if (bloque === undefined) {
         this.valor = "";
         this.nombre = "";
-      }
-      else
+      } else
         this.valor = bloque.darValor();
       return this.valor
     },
@@ -432,11 +450,21 @@ const IteData = {
   darPython: function () {
     var resultado = "";
     if (this.hijos.length >= 2) {
-      resultado += "if " + this.hijos[0].darPython() + ": \n";
-      resultado += "  " + this.hijos[1].darPython() + " \n";
+      resultado += "if " + this.hijos[0].darPython() + ":\n";
+      if (this.hijos[1].icono == "{}") {
+        resultado += this.hijos[1].darPython();
+      } else {
+        resultado += "  " + this.hijos[1].darPython() + "\n";
+      }
     }
     if (this.hijos.length == 3) {
-      resultado += "else: \n  " + this.hijos[2].darPython();
+      if (this.hijos[2].icono == "{}") {
+        resultado += "else:\n" + this.hijos[2].darPython();
+      } else {
+        resultado += "else:\n"
+        resultado += indentacion(this.nivel);
+        resultado += this.hijos[2].darPython();
+      }
     }
     return resultado;
   }
@@ -450,19 +478,18 @@ dataBloques.push(IteData);
 //---------
 
 const ForData = {
-  ...darBloque(13, "for", "for", "Estructura de control", 3, 0),
-  darValor: function () {
-    if (this.hijos.length == 3) {
-      for (var i = this.hijos[0].darValor(); i < this.hijos[1].darValor(); i++) {
-        this.hijos[2].darValor();
-      }
-    }
-  },
+  ...darBloque(13, "for", "for", "Estructura de control", 3, 1),
+  darValor: function () {},
   darPython: function () {
     var resultado = "";
     if (this.hijos.length == 3) {
       resultado += "for i in range(" + this.hijos[0].darPython() + ", " + this.hijos[1].darPython() + "):\n";
-      resultado += "  " + this.hijos[2].darPython() + " \n";
+      if (this.hijos[2].icono == "{}") {
+        resultado += this.hijos[2].darPython();
+      } else {
+        resultado += indentacion(this.nivel);
+        resultado += this.hijos[2].darPython() + " \n";
+      }
     }
     return resultado;
   }
@@ -475,7 +502,7 @@ dataBloques.push(ForData);
 //---------
 
 const PrintData = {
-  ...darBloque(14, "Decir", "print", "Imprime lo que haya en el nodo de entrada", 1, 0),
+  ...darBloque(14, "Decir", "print", "Imprime lo que haya en el nodo de entrada", 1, 1),
   darValor: function () {
     if (this.hijos.length == 1) {
       return this.hijos[0].darValor();
@@ -489,3 +516,14 @@ const PrintData = {
 };
 
 dataBloques.push(PrintData);
+
+//--------- funcion
+
+function indentacion(nivel) {
+  const ind = "    ";
+  var res = "";
+  for (var i = 0; i < nivel; i++) {
+    res += ind;
+  }
+  return res;
+}

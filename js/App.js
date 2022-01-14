@@ -23,39 +23,52 @@ var app = new Vue({
     this.editor.on("nodeUnselected", function () {
       app.nodeSelected = 0;
     });
+    this.eliminadoReciente = false;
+    this.editor.on("connectionRemoved", function(params){
+      if(app.eliminadoReciente == false){
+        app.eliminadoReciente = true;
+        var bloquePadre = bloques.find(b => b.id == params.input_id);
+        var input_class = params.input_class.slice(-1);
+        bloquePadre.hijos.splice(input_class - 1, 1);
+      }
+    });
     var editor = this.editor;
     this.editor.on("keydown", function (event) {
-      if (app.nodeSelected != 0 && event.key === "Backspace") {
+      if (app.nodeSelected != 0 && (event.key === "D" || event.key === "d")) {
         editor.removeNodeId("node-" + app.nodeSelected);
         bloques = bloques.filter(function (bloque) {
           if (bloque.id == app.nodeSelected) {
             for (b of bloque.hijos) {
               b.esRaiz = true;
             }
-            if(bloque.icono == "="){
-              var index = app.variables.findIndex(function(bl){
+            if (bloque.icono == "=") {
+              var index = app.variables.findIndex(function (bl) {
                 return bl.id == bloque.id;
               });
-              if(index >= 0){
+              if (index >= 0) {
                 app.variables.splice(index, 1);
               }
             }
           }
           return bloque.id != app.nodeSelected;
         });
+        app.eliminadoReciente = false;
       }
     });
     this.editor.on("connectionCreated", function (params) {
-      var bloqueOut = bloques[params.output_id - 1];
-      var bloqueIn = bloques[params.input_id - 1];
+      var bloqueOut = bloques.find(b => b.id == params.output_id);
+      var bloqueIn = bloques.find(b => b.id == params.input_id);
       bloqueOut.esRaiz = false;
 
       switch (bloqueIn.icono) {
         case "=":
           bloqueIn.asignar(bloqueOut);
           app.variables.push(bloqueIn)
-          //app.$set(app.variables, bloqueIn.nombre, bloqueIn);
           break;
+        case "for":
+        case "if":
+        case "{}":
+          bloqueOut.nivel = bloqueIn.nivel + 1;
         default:
           var input_class = params.input_class.slice(-1);
           if (input_class == 1) {
@@ -88,6 +101,9 @@ var app = new Vue({
         case 0:
           data = darNodo(AsignacionData);
           componente = "Asignacion";
+          break;
+        case -3:
+          data = darNodo(BlockData);
           break;
         case -2:
           data = darNodo(VariableData);
