@@ -24,12 +24,10 @@ var app = new Vue({
       app.nodeSelected = 0;
     });
     this.eliminadoReciente = false;
-    this.editor.on("connectionRemoved", function(params){
-      if(app.eliminadoReciente == false){
+    this.editor.on("connectionRemoved", function (params) {
+      if (app.eliminadoReciente == false) {
         app.eliminadoReciente = true;
-        var bloquePadre = bloques.find(b => b.id == params.input_id);
-        var input_class = params.input_class.slice(-1);
-        bloquePadre.hijos.splice(input_class - 1, 1);
+        app.coneccionEliminada = params;
       }
     });
     var editor = this.editor;
@@ -39,7 +37,9 @@ var app = new Vue({
         bloques = bloques.filter(function (bloque) {
           if (bloque.id == app.nodeSelected) {
             for (b of bloque.hijos) {
+              console.log("poniendo es raiz: " + JSON.stringify(b));
               b.esRaiz = true;
+              b.nivel = 1;
             }
             if (bloque.icono == "=") {
               var index = app.variables.findIndex(function (bl) {
@@ -49,6 +49,11 @@ var app = new Vue({
                 app.variables.splice(index, 1);
               }
             }
+          }
+          if (app.coneccionEliminada.output_id == app.nodeSelected) {
+            var bloquePadre = bloques.find(b => b.id == app.coneccionEliminada.input_id);
+            var input_class = app.coneccionEliminada.input_class.slice(-1);
+            bloquePadre.hijos.splice(input_class - 1, 1);
           }
           return bloque.id != app.nodeSelected;
         });
