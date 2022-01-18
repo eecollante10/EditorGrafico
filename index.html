@@ -9,7 +9,7 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.css"
     />
-    <link rel="stylesheet" href="assets/estilos/estilos.css">
+    <link rel="stylesheet" href="assets/estilos/estilos.css" />
     <title>Document</title>
   </head>
 
@@ -17,6 +17,10 @@
     <nav class="navbar navbar-light bg-light">
       <div class="container-fluid">
         <span class="navbar-brand mb-0 h1">Editor De Código Gráfico</span>
+        <span class="text-primary"
+          >Oprima la tecla &lt;d&gt; con un nodo seleccionado para
+          borrarlo</span
+        >
       </div>
     </nav>
 
@@ -25,6 +29,15 @@
         class="d-flex flex-column align-items-stretch flex-shrink-0"
         style="width: 380px"
       >
+        <ul class="nav justify-content-end m-1">
+          <li class="nav-item">
+            <button type="button" class="btn btn-outline-info" v-on:click="guardar">Guardar</button>
+          </li>
+
+          <li class="nav-item ms-2">
+            <button type="button" class="btn btn-outline-info" v-on:click="pedirNombreArchivo">Cargar</button>
+          </li>
+        </ul>
         <a
           href="/"
           class="d-flex align-items-center flex-shrink-0 p-3 bg-white link-dark text-decoration-none border-bottom"
@@ -33,7 +46,6 @@
             <use xlink:href="#bootstrap"></use>
           </svg>
           <span class="fs-5 fw-semibold">Bloques</span>
-          
         </a>
         <p class="mt-2 text-center">Dar click en un bloque para agregarlo</p>
         <div
@@ -52,8 +64,14 @@
               <small>{{bloque.icono}}</small>
             </div>
             <div v-show="bloque.icono === '{}'">
-              <label class="col col-4"for="entradas">#Entradas:</label>
-              <input class="col col-2" type="number" name="entradas" v-model="bloque.entradas" v-on:click.stop>
+              <label class="col col-4" for="entradas">#Entradas:</label>
+              <input
+                class="col col-2"
+                type="number"
+                name="entradas"
+                v-model="bloque.entradas"
+                v-on:click.stop
+              />
             </div>
             <div class="col-10 mb-1 small">{{bloque.descripcion}}</div>
           </a>
@@ -61,17 +79,34 @@
         <div
           class="d-flex flex-column border border-warning border-2 w-100 h-50 bg-dark p-2 overflow-auto"
         >
-        <div class="d-grid gap-2 mb-2 dropdown">
-            <button class="btn btn-success text-dark dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+          <div class="d-grid gap-2 mb-2 dropdown">
+            <button
+              class="btn btn-success text-dark dropdown-toggle"
+              type="button"
+              id="dropdownMenuButton1"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
               Generar Código
             </button>
-            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton1">
-              <li><a class="dropdown-item" v-on:click="generarCodigo">Python</a></li>
-              <li><a class="dropdown-item" v-on:click="generarCodigo">Swift</a></li>
-              <li><a class="dropdown-item" v-on:click="generarCodigo">Kotlin</a></li>
+            <ul
+              class="dropdown-menu dropdown-menu-dark"
+              aria-labelledby="dropdownMenuButton1"
+            >
+              <li>
+                <a class="dropdown-item" v-on:click="generarCodigo">Python</a>
+              </li>
+              <li>
+                <a class="dropdown-item" v-on:click="generarCodigo">Swift</a>
+              </li>
+              <li>
+                <a class="dropdown-item" v-on:click="generarCodigo">Kotlin</a>
+              </li>
             </ul>
-        </div>
-        <pre class="flex-grow-1 m-0"><code class="text-secondary" v-html="codigo"></code></pre>
+          </div>
+          <pre
+            class="flex-grow-1 m-0"
+          ><code class="text-secondary" v-html="codigo"></code></pre>
         </div>
       </div>
       <div id="drawflow" class="flex-grow-1"></div>

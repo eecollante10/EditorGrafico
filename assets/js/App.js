@@ -58,7 +58,7 @@ var app = new Vue({
           return bloque.id != app.nodeSelected;
         });
         app.eliminadoReciente = false;
-      }
+      }      
     });
     this.editor.on("connectionCreated", function (params) {
       var bloqueOut = bloques.find(b => b.id == params.output_id);
@@ -88,6 +88,8 @@ var app = new Vue({
       }
     });
     this.editor.start();
+    //var im = '{"drawflow":{"Home":{"data":{"1":{"id":1,"name":"Número","data":{"id":1,"titulo":"Número","icono":"º","descripcion":"Sostiene un número para usarlo con otros bloques","entradas":0,"salidas":1,"esRaiz":true,"valor":"2","hijos":[],"nivel":1},"class":"Class","html":"Numero","typenode":"vue","inputs":{},"outputs":{"output_1":{"connections":[]}},"pos_x":-1,"pos_y":0},"2":{"id":2,"name":"Número","data":{"id":2,"titulo":"Número","icono":"º","descripcion":"Sostiene un número para usarlo con otros bloques","entradas":0,"salidas":1,"esRaiz":true,"valor":"2","hijos":[],"nivel":1},"class":"Class","html":"Numero","typenode":"vue","inputs":{},"outputs":{"output_1":{"connections":[]}},"pos_x":56,"pos_y":173}}}}}';
+    //this.editor.import(im)
   },
   methods: {
     generarCodigo: function () {
@@ -98,6 +100,46 @@ var app = new Vue({
         }
       }
       this.codigo = codigo;
+    },
+    cargar: function(nombre){
+      console.log("cargar: " + nombre);
+      fetch('/cargar/'+nombre)
+      .then(function(res) {
+        console.log("res: " + res)
+          return res.json()   // Convert the data into JSON
+      })
+      .then(function(data) {
+          console.log(data.archivos[0].data); 
+          var parsed = JSON.parse(data.archivos[0].data);  // Logs the data to the console
+          console.log("print parsed:" + parsed );
+          app.editor.import(parsed);
+          return data;
+      });
+    },
+    pedirNombreArchivo: function(event){
+      let nombre = prompt("Ingrese el nombre del archivo", "");
+      this.cargar(nombre);
+    },
+    guardar: function(event){
+      var exportdata = this.editor.export();
+      console.log("guardando: " + JSON.stringify(exportdata))
+      fetch("/guardar", {
+        method: 'POST',
+        body: JSON.stringify(exportdata),
+        headers: {
+          "Content-type": "text/plain"
+        }
+    })
+        .then(function(res) {
+          console.log("data: " + JSON.stringify(res))
+            return res.json()   // Convert the data into JSON
+        })
+        .then(function(data) {
+            console.log(data);   // Logs the data to the console
+        })
+        .catch(function(error) {
+            console.log(error);   // Logs an error in case there is one
+        }); 
     },
     crearBloque: function (bloque) {
       var data;
