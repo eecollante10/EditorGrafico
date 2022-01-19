@@ -4,7 +4,8 @@ var app = new Vue({
     bloques: dataBloques,
     codigo: "",
     variables: [],
-    nodeSelected: 0
+    nodeSelected: 0,
+    editor: null
   },
   mounted: function () {
     // `this` points to the vm instance
@@ -17,7 +18,7 @@ var app = new Vue({
     this.editor.registerNode("Numero", Numero);
     this.editor.registerNode("Texto", Texto);
     this.editor.registerNode("Operador", Operador);
-    this.editor.on("nodeCreated", function(id){
+    this.editor.on("nodeCreated", function (id) {
       ultimo_id_creado = id
     })
     this.editor.on("nodeSelected", function (id) {
@@ -28,42 +29,68 @@ var app = new Vue({
     });
     this.eliminadoReciente = false;
     this.editor.on("connectionRemoved", function (params) {
-      if (app.eliminadoReciente == false) {
+      /*if (app.eliminadoReciente == false) {
         app.eliminadoReciente = true;
         app.coneccionEliminada = params;
+      }*/
+      const nodeInfo = app.editor.getNodeFromId(params.input_id);
+      var bloquePadre = bloques.find(b => b.id == params.input_id);
+      var input_class = params.input_class.slice(-1);
+      if(nodeInfo.inputs[params.input_class].connections.length == 0 && bloquePadre.hijos.length >= input_class){
+        bloquePadre.hijos[input_class - 1].esRaiz = true;
+        bloquePadre.hijos[input_class - 1].nivel = 1;
+        bloquePadre.hijos.splice(input_class - 1, 1);
       }
     });
-    var editor = this.editor;
     this.editor.on("keydown", function (event) {
       if (app.nodeSelected != 0 && (event.key === "D" || event.key === "d")) {
-        editor.removeNodeId("node-" + app.nodeSelected);
-        bloques = bloques.filter(function (bloque) {
-          if (bloque.id == app.nodeSelected) {
-            for (b of bloque.hijos) {
-              console.log("poniendo es raiz: " + JSON.stringify(b));
-              b.esRaiz = true;
-              b.nivel = 1;
-            }
-            if (bloque.icono == "=") {
-              var index = app.variables.findIndex(function (bl) {
-                return bl.id == bloque.id;
-              });
-              if (index >= 0) {
-                app.variables.splice(index, 1);
-              }
+        app.editor.removeNodeId("node-" + app.nodeSelected);
+      }
+    })
+    this.editor.on("nodeRemoved", function (id) {
+      bloques = bloques.filter(function (bloque) {
+        if (bloque.id == id) {
+          /*for (b of bloque.hijos) {
+            console.log("poniendo es raiz: " + JSON.stringify(b));
+            b.esRaiz = true;
+            b.nivel = 1;
+          }*/
+          if (bloque.icono == "=") {
+            var index = app.variables.findIndex(function (bl) {
+              return bl.id == bloque.id;
+            });
+            if (index >= 0) {
+              app.variables.splice(index, 1);
             }
           }
-          if (app.coneccionEliminada.output_id == app.nodeSelected) {
-            var bloquePadre = bloques.find(b => b.id == app.coneccionEliminada.input_id);
-            var input_class = app.coneccionEliminada.input_class.slice(-1);
-            bloquePadre.hijos.splice(input_class - 1, 1);
-          }
-          return bloque.id != app.nodeSelected;
-        });
-        app.eliminadoReciente = false;
-      }      
+        }
+        /*if (app.coneccionEliminada.output_id == app.nodeSelected) {
+          var bloquePadre = bloques.find(b => b.id == app.coneccionEliminada.input_id);
+          var input_class = app.coneccionEliminada.input_class.slice(-1);
+          bloquePadre.hijos.splice(input_class - 1, 1);
+        }*/
+        return bloque.id != id;
+      });
+      app.eliminadoReciente = false;
     });
     this.editor.on("connectionCreated", function (params) {
+      //inpuyt node
+      const nodeInfo = app.editor.getNodeFromId(params.input_id);
+      const nodeInfo2 = app.editor.getNodeFromId(params.output_id);
+      if (nodeInfo.inputs[params.input_class].connections.length > 1) {
+        var remove_index = nodeInfo.inputs[params.input_class].connections.length - 1
+        const removeConnectionInfo = nodeInfo.inputs[params.input_class].connections[remove_index];
+        app.editor.removeSingleConnection(removeConnectionInfo.node, params.input_id, removeConnectionInfo.input, params.input_class);
+        return;
+      }
+      // output node
+      else if (nodeInfo2.outputs[params.output_class].connections.length > 1) {
+        var remove_index = nodeInfo2.outputs[params.output_class].connections.length - 1
+        const removeConnectionInfo = nodeInfo2.outputs[params.output_class].connections[remove_index];
+        app.editor.removeSingleConnection(params.output_id, removeConnectionInfo.node, params.output_class, removeConnectionInfo.output);
+        return;
+      }
+
       var bloqueOut = bloques.find(b => b.id == params.output_id);
       var bloqueIn = bloques.find(b => b.id == params.input_id);
       bloqueOut.esRaiz = false;
@@ -103,51 +130,62 @@ var app = new Vue({
       }
       this.codigo = codigo;
     },
-    cargar: function(event){
+    cargar: function (event) {
       let nombre = prompt("Ingrese el nombre del archivo", "");
+      if (nombre == null || nombre == "") {
+        window.alert("Debe escribir un nombre de archivo para cargar");
+        return
+      }
       console.log("cargar: " + nombre);
-      fetch('/cargar/'+nombre)
-      .then(function(res) {
-          return res.json()   // Convert the data into JSON
-      })
-      .then(function(data) {
-          var parsed = JSON.parse(data.archivos[data.archivos.length - 1].data);  // Logs the data to the console
+      fetch('/cargar/' + nombre)
+        .then(function (res) {
+          return res.json() // Convert the data into JSON
+        })
+        .then(function (data) {
+          var parsed = JSON.parse(data.archivos[data.archivos.length - 1].data); // Logs the data to the console
           bloques = parsed.bloques
-          for(b of bloques){
+          for (b of bloques) {
             b.hijos = b.hijos.map(bl => bloques.find(bloque => bloque.id == bl.id))
           }
+          cargando = true
+          indice_carga = 0
           app.editor.import(parsed.data);
+          cargando = false
           id_inc = app.editor.nodeId
           return data;
-      });
+        });
     },
-    guardar: function(event){
+    guardar: function (event) {
       var exportdata = this.editor.export();
-      var bls = JSON.parse(JSON.stringify(bloques)).map(function(bloque){
+      var bls = JSON.parse(JSON.stringify(bloques)).map(function (bloque) {
         bloque.hijos = bloque.hijos.map(b => b.id);
         return bloque
       })
       console.log("guardando: " + JSON.stringify(exportdata))
       let nombreArchivo = prompt("Ingrese el nombre del archivo", "");
+      if (nombreArchivo == null || nombreArchivo == "") {
+        window.alert("Debe escribir un nombre de archivo para guardar");
+        return
+      }
       fetch("/guardar", {
-        method: 'POST',
-        body: nombreArchivo + JSON.stringify({
-          data : exportdata,
-          bloques: bls
-        }),
-        headers: {
-          "Content-type": "text/plain"
-        }
-    })
-        .then(function(res) {
-            return res.json()   // Convert the data into JSON
+          method: 'POST',
+          body: nombreArchivo + JSON.stringify({
+            data: exportdata,
+            bloques: bls
+          }),
+          headers: {
+            "Content-type": "text/plain"
+          }
         })
-        .then(function(data) {
-            console.log(data);   // Logs the data to the console
+        .then(function (res) {
+          return res.json() // Convert the data into JSON
         })
-        .catch(function(error) {
-            console.log(error);   // Logs an error in case there is one
-        }); 
+        .then(function (data) {
+          console.log(data); // Logs the data to the console
+        })
+        .catch(function (error) {
+          console.log(error); // Logs an error in case there is one
+        });
     },
     crearBloque: function (bloque) {
       var data;

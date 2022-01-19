@@ -2,6 +2,8 @@ var bloques = [];
 var dataBloques = [];
 var id_inc = 1;
 var ultimo_id_creado = 0
+var cargando = false
+var indice_carga = 0
 
 const darBloque = function (id, titulo, icono, descripcion, entradas, salidas) {
   return {
@@ -71,7 +73,23 @@ dataBloques.push(AsignacionData);
 
 var Asignacion = Vue.component("Asignacion", {
   data: function () {
-    return bloques[bloques.length - 1];
+    var indice = cargando ? indice_carga : bloques.length - 1;
+    if (cargando) indice_carga++;
+    var bloque = bloques[indice];
+    bloque.asignar = function (bloque) {
+      this.hijos.push(bloque);
+    };
+    bloque.darValor = function () {
+      if (this.hijos.length > 0) {
+        return this.hijos[0].darValor();
+      }
+    };
+    bloque.darPython = function () {
+      if (this.hijos.length > 0) {
+        return this.nombre + " = " + this.hijos[0].darPython();
+      }
+    };
+    return bloque;
   },
   computed: {
     valor: function () {
@@ -96,9 +114,17 @@ var Asignacion = Vue.component("Asignacion", {
 
 var Variable = Vue.component("Variable", {
   data: function () {
-    var data = bloques[bloques.length - 1];
-    data.nombre = "";
-    return data;
+    var indice = cargando ? indice_carga : bloques.length - 1;
+    if (cargando) indice_carga++;
+    var bloque = bloques[indice];
+    bloque.nombre = "";
+    bloque.darValor = function(){
+      return this.valor;
+    }
+    bloque.darPython = function(){
+      return this.nombre;
+    }
+    return bloque;
   },
   props: ["variables"],
   computed: {
@@ -150,7 +176,9 @@ dataBloques.push(VariableData);
 
 var Numero = Vue.component("Numero", {
   data: function () {
-    var bloque = bloques.find(b => b.id == app.editor.nodeId);
+    var indice = cargando ? indice_carga : bloques.length - 1;
+    if (cargando) indice_carga++;
+    var bloque = bloques[indice];
     bloque.darValor = function () {
       return parseInt(this.valor);
     }
@@ -171,6 +199,12 @@ var Numero = Vue.component("Numero", {
 const NumeroData = {
   ...darBloque(1, "Número", "º", "Sostiene un número para usarlo con otros bloques", 0, 1),
   valor: 0,
+  darValor: function () {
+    return parseInt(this.valor);
+  },
+  darPython : function () {
+    return this.valor;
+  }
 }
 
 dataBloques.push(NumeroData);
@@ -181,7 +215,9 @@ dataBloques.push(NumeroData);
 
 var Texto = Vue.component("Texto", {
   data: function () {
-    var bloque = bloques[bloques.length - 1];
+    var indice = cargando ? indice_carga : bloques.length - 1;
+    if (cargando) indice_carga++;
+    var bloque = bloques[indice];
     bloque.darValor = function () {
       return this.valor;
     };
@@ -212,7 +248,9 @@ dataBloques.push(TextoData);
 
 var Operador = Vue.component("Operador", {
   data: function () {
-    var bloque = bloques[bloques.length - 1];
+    var indice = cargando ? indice_carga : bloques.length - 1;
+    if (cargando) indice_carga++;
+    var bloque = bloques[indice];
     switch (bloque.icono) {
       case "+":
         bloque.darValor = SumaData.darValor;
@@ -297,7 +335,7 @@ const SumaData = {
   },
   darPython: function () {
     if (this.hijos.length == 2) {
-      return this.hijos[0].darPython() + " + " + this.hijos[1].darPython();
+      return "(" + this.hijos[0].darPython() + " + " + this.hijos[1].darPython() + ")";
     }
   }
 };
@@ -318,7 +356,7 @@ const RestaData = {
   },
   darPython: function () {
     if (this.hijos.length == 2) {
-      return this.hijos[0].darPython() + " - " + this.hijos[1].darPython();
+      return "(" + this.hijos[0].darPython() + " - " + this.hijos[1].darPython() + ")";
     }
   }
 };
