@@ -1,6 +1,7 @@
 var bloques = [];
 var dataBloques = [];
 var id_inc = 1;
+var ultimo_id_creado = 0
 
 const darBloque = function (id, titulo, icono, descripcion, entradas, salidas) {
   return {
@@ -149,12 +150,19 @@ dataBloques.push(VariableData);
 
 var Numero = Vue.component("Numero", {
   data: function () {
-    return bloques[bloques.length - 1];
+    var bloque = bloques.find(b => b.id == app.editor.nodeId);
+    bloque.darValor = function () {
+      return parseInt(this.valor);
+    }
+    bloque.darPython = function () {
+      return this.valor;
+    }
+    return bloque;
   },
   template: `<div>
                       <h4>{{titulo}}</h4>
                       <div>
-                        <input type="number" df-valor>
+                        <input type="number" df-valor v-model="valor">
                       </div>
                   </div>
                   `,
@@ -163,12 +171,6 @@ var Numero = Vue.component("Numero", {
 const NumeroData = {
   ...darBloque(1, "Número", "º", "Sostiene un número para usarlo con otros bloques", 0, 1),
   valor: 0,
-  darValor: function () {
-    return parseInt(this.valor);
-  },
-  darPython: function () {
-    return this.valor;
-  }
 }
 
 dataBloques.push(NumeroData);
@@ -179,12 +181,19 @@ dataBloques.push(NumeroData);
 
 var Texto = Vue.component("Texto", {
   data: function () {
-    return bloques[bloques.length - 1];
+    var bloque = bloques[bloques.length - 1];
+    bloque.darValor = function () {
+      return this.valor;
+    };
+    bloque.darPython = function () {
+      return '"' + this.valor + '"';
+    }
+    return bloque;
   },
   template: `<div>
                       <h4>{{titulo}}</h4>
                       <div>
-                        <input type="text" df-valor>
+                        <input type="text" df-valor v-model="valor">
                       </div>
                   </div>
                   `,
@@ -193,12 +202,6 @@ var Texto = Vue.component("Texto", {
 const TextoData = {
   ...darBloque(-1, "Texto", "ABC", "Sostiene texto para usarlo con otros bloques", 0, 1),
   valor: "",
-  darValor: function () {
-    return this.valor;
-  },
-  darPython: function () {
-    return '"' + this.valor + '"';
-  }
 }
 
 dataBloques.push(TextoData);
@@ -209,7 +212,61 @@ dataBloques.push(TextoData);
 
 var Operador = Vue.component("Operador", {
   data: function () {
-    return bloques[bloques.length - 1];
+    var bloque = bloques[bloques.length - 1];
+    switch (bloque.icono) {
+      case "+":
+        bloque.darValor = SumaData.darValor;
+        bloque.darPython = SumaData.darPython;
+        break;
+      case "-":
+        bloque.darValor = RestaData.darValor
+        bloque.darPython = RestaData.darPython
+        break;
+      case "x":
+        bloque.darValor = MultipData.darValor
+        bloque.darPython = MultipData.darPython
+        break;
+      case "÷":
+        bloque.darValor = DivisionData.darValor
+        bloque.darPython = DivisionData.darPython
+      case "==":
+        bloque.darValor = IgualData.darValor
+        bloque.darPython = IgualData.darPython
+        break;
+      case "!=":
+        bloque.darValor = NotData.darValor
+        bloque.darPython = NotData.darPython
+        break;
+      case ">":
+        bloque.darValor = MayorData.darValor
+        bloque.darPython = MayorData.darPython
+        break;
+      case "||":
+        bloque.darValor = OrData.darValor
+        bloque.darPython = OrData.darPython
+        break;
+      case "&&":
+        bloque.darValor = AndData.darValor
+        bloque.darPython = AndData.darPython
+        break;
+      case "!":
+        bloque.darValor = NotData.darValor
+        bloque.darPython = NotData.darPython
+        break;
+      case "if":
+        bloque.darValor = IteData.darValor
+        bloque.darPython = IteData.darPython
+        break;
+      case "for":
+        bloque.darValor = ForData.darValor
+        bloque.darPython = ForData.darPython
+        break;
+      case "print":
+        bloque.darValor = PrintData.darValor
+        bloque.darPython = PrintData.darPython
+        break;
+    }
+    return bloque;
   },
   computed: {
     valor: function () {

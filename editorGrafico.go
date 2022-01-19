@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -37,10 +38,11 @@ func main() {
             log.Fatal(err)
         }
         defer r.Body.Close()
-        fmt.Println("body es: ")
-        fmt.Println(string(body))
-        rw.Write([]byte(body))
-        agregarDatos(db, "hola", string(body))
+        z := strings.SplitN(string(body), "{", 2)
+        fmt.Println("nombre es:", z[0])
+        fmt.Println("data es:", "{" + z[1])
+        agregarDatos(db, z[0], "{" + z[1])
+        rw.Write([]byte("{'ok': 'ok'}"))
     })
     
     fmt.Println(" lis an se") 

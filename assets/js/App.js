@@ -17,6 +17,9 @@ var app = new Vue({
     this.editor.registerNode("Numero", Numero);
     this.editor.registerNode("Texto", Texto);
     this.editor.registerNode("Operador", Operador);
+    this.editor.on("nodeCreated", function(id){
+      ultimo_id_creado = id
+    })
     this.editor.on("nodeSelected", function (id) {
       app.nodeSelected = id;
     });
@@ -79,17 +82,16 @@ var app = new Vue({
           if (input_class == 1) {
             bloqueIn.hijos.splice(0, 0, bloqueOut);
           } else if (input_class == 2) {
+            console.log("splice 1");
             bloqueIn.hijos.splice(1, 0, bloqueOut);
           } else {
+            console.log("splice 2");
             bloqueIn.hijos.splice(2, 0, bloqueOut);
           }
           break;
-
       }
     });
     this.editor.start();
-    //var im = '{"drawflow":{"Home":{"data":{"1":{"id":1,"name":"Número","data":{"id":1,"titulo":"Número","icono":"º","descripcion":"Sostiene un número para usarlo con otros bloques","entradas":0,"salidas":1,"esRaiz":true,"valor":"2","hijos":[],"nivel":1},"class":"Class","html":"Numero","typenode":"vue","inputs":{},"outputs":{"output_1":{"connections":[]}},"pos_x":-1,"pos_y":0},"2":{"id":2,"name":"Número","data":{"id":2,"titulo":"Número","icono":"º","descripcion":"Sostiene un número para usarlo con otros bloques","entradas":0,"salidas":1,"esRaiz":true,"valor":"2","hijos":[],"nivel":1},"class":"Class","html":"Numero","typenode":"vue","inputs":{},"outputs":{"output_1":{"connections":[]}},"pos_x":56,"pos_y":173}}}}}';
-    //this.editor.import(im)
   },
   methods: {
     generarCodigo: function () {
@@ -101,37 +103,43 @@ var app = new Vue({
       }
       this.codigo = codigo;
     },
-    cargar: function(nombre){
+    cargar: function(event){
+      let nombre = prompt("Ingrese el nombre del archivo", "");
       console.log("cargar: " + nombre);
       fetch('/cargar/'+nombre)
       .then(function(res) {
-        console.log("res: " + res)
           return res.json()   // Convert the data into JSON
       })
       .then(function(data) {
-          console.log(data.archivos[0].data); 
-          var parsed = JSON.parse(data.archivos[0].data);  // Logs the data to the console
-          console.log("print parsed:" + parsed );
-          app.editor.import(parsed);
+          var parsed = JSON.parse(data.archivos[data.archivos.length - 1].data);  // Logs the data to the console
+          bloques = parsed.bloques
+          for(b of bloques){
+            b.hijos = b.hijos.map(bl => bloques.find(bloque => bloque.id == bl.id))
+          }
+          app.editor.import(parsed.data);
+          id_inc = app.editor.nodeId
           return data;
       });
     },
-    pedirNombreArchivo: function(event){
-      let nombre = prompt("Ingrese el nombre del archivo", "");
-      this.cargar(nombre);
-    },
     guardar: function(event){
       var exportdata = this.editor.export();
+      var bls = JSON.parse(JSON.stringify(bloques)).map(function(bloque){
+        bloque.hijos = bloque.hijos.map(b => b.id);
+        return bloque
+      })
       console.log("guardando: " + JSON.stringify(exportdata))
+      let nombreArchivo = prompt("Ingrese el nombre del archivo", "");
       fetch("/guardar", {
         method: 'POST',
-        body: JSON.stringify(exportdata),
+        body: nombreArchivo + JSON.stringify({
+          data : exportdata,
+          bloques: bls
+        }),
         headers: {
           "Content-type": "text/plain"
         }
     })
         .then(function(res) {
-          console.log("data: " + JSON.stringify(res))
             return res.json()   // Convert the data into JSON
         })
         .then(function(data) {
