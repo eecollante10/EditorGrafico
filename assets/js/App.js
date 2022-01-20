@@ -110,7 +110,7 @@ var app = new Vue({
       var codigo = "";
       var asignaciones = bloques.filter(b => b.icono == "=");
       var resto = bloques.filter(b => b.icono != "=");
-      var generar = function(bloq){
+      var generar = function (bloq) {
         var cod = ""
         for (bloque of bloq) {
           if (bloque.esRaiz) {
@@ -142,7 +142,13 @@ var app = new Vue({
           var parsed = JSON.parse(data.archivos[data.archivos.length - 1].data); // Logs the data to the console
           bloques = parsed.bloques
           for (b of bloques) {
-            b.hijos = b.hijos.map(bl => bloques.find(bloque => bloque.id == bl.id))
+            var dataBloque = app.bloques.find(bloque => bloque.icono == b.icono)
+            b.darValor = dataBloque.darValor
+            b.darPython = dataBloque.darPython
+            b.darSwift = dataBloque.darSwift
+            if (b.icono == "=")
+              b.asignar = dataBloque.asignar
+            b.hijos = b.hijos.map(bl => bloques.find(bloque => bloque.id == bl))
           }
           cargando = true
           indice_carga = 0

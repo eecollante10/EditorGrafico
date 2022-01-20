@@ -42,7 +42,7 @@ func main() {
         fmt.Println("nombre es:", z[0])
         fmt.Println("data es:", "{" + z[1])
         agregarDatos(db, z[0], "{" + z[1])
-        rw.Write([]byte("{'ok': 'ok'}"))
+        rw.Write([]byte("{\"ok\": \"ok\"}"))
     })
     
     fmt.Println(" lis an se") 
