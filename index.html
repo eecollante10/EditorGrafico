@@ -64,7 +64,7 @@
               <small>{{bloque.icono}}</small>
             </div>
             <div v-show="bloque.icono === '{}'">
-              <label class="col col-4" for="entradas">#Entradas:</label>
+              <label class="col col-4" for="entradas">#Líneas:</label>
               <input
                 class="col col-2"
                 type="number"
@@ -94,13 +94,10 @@
               aria-labelledby="dropdownMenuButton1"
             >
               <li>
-                <a class="dropdown-item" v-on:click="generarCodigo">Python</a>
+                <a class="dropdown-item" v-on:click="generarCodigo(0)">Python</a>
               </li>
               <li>
-                <a class="dropdown-item" v-on:click="generarCodigo">Swift</a>
-              </li>
-              <li>
-                <a class="dropdown-item" v-on:click="generarCodigo">Kotlin</a>
+                <a class="dropdown-item" v-on:click="generarCodigo(1)">Swift</a>
               </li>
             </ul>
           </div>

@@ -38,7 +38,15 @@ const BlockData = {
     var codigo = "";
     for (hijo of this.hijos) {
       codigo += indentacion(this.nivel);
-      codigo += undefined + "\n";
+      codigo += hijo.darPython() + "\n";
+    }
+    return codigo;
+  },
+  darSwift: function () {
+    var codigo = "";
+    for (hijo of this.hijos) {
+      codigo += indentacion(this.nivel);
+      codigo += hijo.darSwift() + "\n";
     }
     return codigo;
   }
@@ -65,6 +73,11 @@ const AsignacionData = {
     if (this.hijos.length > 0) {
       return this.nombre + " = " + this.hijos[0].darPython();
     }
+  },
+  darSwift: function () {
+    if (this.hijos.length > 0) {
+      return "var " + this.nombre + " = " + this.hijos[0].darPython();
+    }
   }
 }
 
@@ -87,6 +100,11 @@ var Asignacion = Vue.component("Asignacion", {
     bloque.darPython = function () {
       if (this.hijos.length > 0) {
         return this.nombre + " = " + this.hijos[0].darPython();
+      }
+    };
+    bloque.darSwift = function () {
+      if (this.hijos.length > 0) {
+        return "var " + this.nombre + " = " + this.hijos[0].darPython();
       }
     };
     return bloque;
@@ -118,10 +136,13 @@ var Variable = Vue.component("Variable", {
     if (cargando) indice_carga++;
     var bloque = bloques[indice];
     bloque.nombre = "";
-    bloque.darValor = function(){
+    bloque.darValor = function () {
       return this.valor;
     }
-    bloque.darPython = function(){
+    bloque.darPython = function () {
+      return this.nombre;
+    }
+    bloque.darSwift = function () {
       return this.nombre;
     }
     return bloque;
@@ -185,6 +206,9 @@ var Numero = Vue.component("Numero", {
     bloque.darPython = function () {
       return this.valor;
     }
+    bloque.darSwift = function () {
+      return this.valor;
+    }
     return bloque;
   },
   template: `<div>
@@ -202,7 +226,7 @@ const NumeroData = {
   darValor: function () {
     return parseInt(this.valor);
   },
-  darPython : function () {
+  darPython: function () {
     return this.valor;
   }
 }
@@ -222,6 +246,9 @@ var Texto = Vue.component("Texto", {
       return this.valor;
     };
     bloque.darPython = function () {
+      return '"' + this.valor + '"';
+    }
+    bloque.darSwift = function () {
       return '"' + this.valor + '"';
     }
     return bloque;
@@ -251,59 +278,48 @@ var Operador = Vue.component("Operador", {
     var indice = cargando ? indice_carga : bloques.length - 1;
     if (cargando) indice_carga++;
     var bloque = bloques[indice];
+    var data;
     switch (bloque.icono) {
       case "+":
-        bloque.darValor = SumaData.darValor;
-        bloque.darPython = SumaData.darPython;
+        data = SumaData;
         break;
       case "-":
-        bloque.darValor = RestaData.darValor
-        bloque.darPython = RestaData.darPython
+        data = RestaData
         break;
       case "x":
-        bloque.darValor = MultipData.darValor
-        bloque.darPython = MultipData.darPython
+        data = MultipData;
         break;
       case "÷":
-        bloque.darValor = DivisionData.darValor
-        bloque.darPython = DivisionData.darPython
+        data = DivisionData;
+        break;
       case "==":
-        bloque.darValor = IgualData.darValor
-        bloque.darPython = IgualData.darPython
+        data = IgualData;
         break;
       case "!=":
-        bloque.darValor = NotData.darValor
-        bloque.darPython = NotData.darPython
+        data = NotData;
         break;
       case ">":
-        bloque.darValor = MayorData.darValor
-        bloque.darPython = MayorData.darPython
+        data = MayorData;
         break;
       case "||":
-        bloque.darValor = OrData.darValor
-        bloque.darPython = OrData.darPython
+        data = OrData;
         break;
       case "&&":
-        bloque.darValor = AndData.darValor
-        bloque.darPython = AndData.darPython
+        data = AndData;
         break;
       case "!":
-        bloque.darValor = NotData.darValor
-        bloque.darPython = NotData.darPython
-        break;
-      case "if":
-        bloque.darValor = IteData.darValor
-        bloque.darPython = IteData.darPython
-        break;
-      case "for":
-        bloque.darValor = ForData.darValor
-        bloque.darPython = ForData.darPython
+        data = NotData;
         break;
       case "print":
-        bloque.darValor = PrintData.darValor
-        bloque.darPython = PrintData.darPython
+        data = PrintData;
+        break;
+      case "{}":
+        data = BlockData;
         break;
     }
+    bloque.darValor = data.darValor
+    bloque.darPython = data.darPython
+    bloque.darSwift = data.darSwift
     return bloque;
   },
   computed: {
@@ -313,7 +329,7 @@ var Operador = Vue.component("Operador", {
   },
   template: `<div>
                       <h4>{{titulo}}</h4>
-                      <div v-show="icono !== 'for'"><input type="text" readonly df-valor v-model="valor"></div>
+                      <div><input type="text" readonly df-valor v-model="valor"></div>
                   </div>
                   `,
 });
@@ -337,6 +353,9 @@ const SumaData = {
     if (this.hijos.length == 2) {
       return "(" + this.hijos[0].darPython() + " + " + this.hijos[1].darPython() + ")";
     }
+  },
+  darSwift: function () {
+    return "(" + this.hijos[0].darSwift() + " + " + this.hijos[1].darSwift() + ")";
   }
 };
 
@@ -358,6 +377,9 @@ const RestaData = {
     if (this.hijos.length == 2) {
       return "(" + this.hijos[0].darPython() + " - " + this.hijos[1].darPython() + ")";
     }
+  },
+  darSwift: function () {
+    return "(" + this.hijos[0].darSwift() + " - " + this.hijos[1].darSwift() + ")";
   }
 };
 
@@ -379,6 +401,9 @@ const MultipData = {
     if (this.hijos.length == 2) {
       return this.hijos[0].darPython() + " * " + this.hijos[1].darPython();
     }
+  },
+  darSwift: function () {
+    return this.hijos[0].darSwift() + " * " + this.hijos[1].darSwift();
   }
 };
 
@@ -400,6 +425,9 @@ const DivisionData = {
     if (this.hijos.length == 2) {
       return this.hijos[0].darPython() + " / " + this.hijos[1].darPython();
     }
+  },
+  darSwift: function () {
+    return this.hijos[0].darSwift() + " / " + this.hijos[1].darSwift();
   }
 };
 
@@ -421,6 +449,9 @@ const IgualData = {
     if (this.hijos.length == 2) {
       return this.hijos[0].darPython() + " == " + this.hijos[1].darPython();
     }
+  },
+  darSwift: function () {
+    return this.hijos[0].darSwift() + " == " + this.hijos[1].darSwift();
   }
 };
 
@@ -442,6 +473,9 @@ const DiferenteData = {
     if (this.hijos.length == 2) {
       return this.hijos[0].darPython() + " != " + this.hijos[1].darPython();
     }
+  },
+  darSwift: function () {
+    return this.hijos[0].darSwift() + " != " + this.hijos[1].darSwift();
   }
 };
 
@@ -463,6 +497,9 @@ const MayorData = {
     if (this.hijos.length == 2) {
       return this.hijos[0].darPython() + " > " + this.hijos[1].darPython();
     }
+  },
+  darSwift: function () {
+    return this.hijos[0].darSwift() + " > " + this.hijos[1].darSwift();
   }
 };
 
@@ -484,6 +521,9 @@ const OrData = {
     if (this.hijos.length == 2) {
       return this.hijos[0].darPython() + " or " + this.hijos[1].darPython();
     }
+  },
+  darSwift: function () {
+    return this.hijos[0].darSwift() + " || " + this.hijos[1].darSwift();
   }
 };
 
@@ -505,6 +545,9 @@ const AndData = {
     if (this.hijos.length == 2) {
       return this.hijos[0].darPython() + " and " + this.hijos[1].darPython();
     }
+  },
+  darSwift: function () {
+    return this.hijos[0].darSwift() + " && " + this.hijos[1].darSwift();
   }
 };
 
@@ -525,6 +568,9 @@ const NotData = {
     if (this.hijos.length == 1) {
       return "!" + this.hijos[0].darPython();
     }
+  },
+  darSwift: function () {
+    return "!" + this.hijos[1].darSwift();
   }
 };
 
@@ -533,6 +579,36 @@ dataBloques.push(NotData);
 //---------
 // Ite
 //---------
+
+var Control = Vue.component("Control", {
+  data: function () {
+    var indice = cargando ? indice_carga : bloques.length - 1;
+    if (cargando) indice_carga++;
+    var bloque = bloques[indice];
+    var data = bloque.icono == "for" ? ForData : IteData;
+    bloque.darValor = data.darValor
+    bloque.darPython = data.darPython
+    bloque.darSwift = data.darSwift
+    return bloque;
+  },
+  computed: {
+    valor: function () {
+      return this.darValor();
+    },
+  },
+  template: `<div>
+                      <h4>{{titulo}}</h4>
+                      <div class="row">
+                        <div class="d-flex col-8 flex-column">
+                          <p v-if="icono === 'for'">Desde</p> <p v-else>Si</p>
+                          <p v-if="icono === 'for'">Hasta</p> <p v-else>Entonces</p>
+                          <p v-if="icono === 'for'">Hacer</p> <p v-else>Si No</p> 
+                        </div>
+                        <input v-show="icono !== 'for'" class="col-4" type="text" df-valor v-model="valor" style="min-width: 100px;">
+                      </div>
+                  </div>
+                  `,
+});
 
 const IteData = {
   ...darBloque(12, "if then else", "if", "Estructura de control", 3, 1),
@@ -549,7 +625,8 @@ const IteData = {
       if (this.hijos[1].icono == "{}") {
         resultado += this.hijos[1].darPython();
       } else {
-        resultado += "  " + this.hijos[1].darPython() + "\n";
+        resultado += indentacion(this.nivel);
+        resultado += this.hijos[1].darPython() + "\n";
       }
     }
     if (this.hijos.length == 3) {
@@ -560,6 +637,30 @@ const IteData = {
         resultado += indentacion(this.nivel);
         resultado += this.hijos[2].darPython();
       }
+    }
+    return resultado;
+  },
+  darSwift: function () {
+    var resultado = "";
+    if (this.hijos.length >= 2) {
+      resultado += "if " + this.hijos[0].darSwift() + "{\n";
+      if (this.hijos[1].icono == "{}") {
+        resultado += this.hijos[1].darSwift();
+      } else {
+        resultado += indentacion(this.nivel);
+        resultado += this.hijos[1].darSwift() + "\n";
+      }
+      resultado += indentacion(this.nivel - 1) + "}";
+    }
+    if (this.hijos.length == 3) {
+      if (this.hijos[2].icono == "{}") {
+        resultado += "else{\n" + this.hijos[2].darSwift();
+      } else {
+        resultado += "else{\n"
+        resultado += indentacion(this.nivel);
+        resultado += this.hijos[2].darSwift() + "\n";
+      }
+      resultado += indentacion(this.nivel - 1) + "}";
     }
     return resultado;
   }
@@ -587,6 +688,20 @@ const ForData = {
       }
     }
     return resultado;
+  },
+  darSwift: function () {
+    var resultado = "";
+    if (this.hijos.length == 3) {
+      resultado += "for i in " + this.hijos[0].darSwift() + "..<" + this.hijos[1].darSwift() + "{\n";
+      if (this.hijos[2].icono == "{}") {
+        resultado += this.hijos[2].darSwift();
+      } else {
+        resultado += indentacion(this.nivel);
+        resultado += this.hijos[2].darSwift() + "\n";
+      }
+      resultado += indentacion(this.nivel - 1) + "}";
+    }
+    return resultado;
   }
 };
 
@@ -606,6 +721,11 @@ const PrintData = {
   darPython: function () {
     if (this.hijos.length == 1) {
       return "print( " + this.hijos[0].darPython() + " )";
+    }
+  },
+  darSwift: function () {
+    if (this.hijos.length == 1) {
+      return "print( " + this.hijos[0].darSwift() + " )";
     }
   }
 };

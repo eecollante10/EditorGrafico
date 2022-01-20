@@ -16,6 +16,7 @@ var app = new Vue({
       variables: this.variables
     }, {});
     this.editor.registerNode("Numero", Numero);
+    this.editor.registerNode("Control", Control);
     this.editor.registerNode("Texto", Texto);
     this.editor.registerNode("Operador", Operador);
     this.editor.on("nodeCreated", function (id) {
@@ -27,16 +28,11 @@ var app = new Vue({
     this.editor.on("nodeUnselected", function () {
       app.nodeSelected = 0;
     });
-    this.eliminadoReciente = false;
     this.editor.on("connectionRemoved", function (params) {
-      /*if (app.eliminadoReciente == false) {
-        app.eliminadoReciente = true;
-        app.coneccionEliminada = params;
-      }*/
       const nodeInfo = app.editor.getNodeFromId(params.input_id);
       var bloquePadre = bloques.find(b => b.id == params.input_id);
       var input_class = params.input_class.slice(-1);
-      if(nodeInfo.inputs[params.input_class].connections.length == 0 && bloquePadre.hijos.length >= input_class){
+      if (nodeInfo.inputs[params.input_class].connections.length == 0 && bloquePadre.hijos.length >= input_class) {
         bloquePadre.hijos[input_class - 1].esRaiz = true;
         bloquePadre.hijos[input_class - 1].nivel = 1;
         bloquePadre.hijos.splice(input_class - 1, 1);
@@ -50,11 +46,6 @@ var app = new Vue({
     this.editor.on("nodeRemoved", function (id) {
       bloques = bloques.filter(function (bloque) {
         if (bloque.id == id) {
-          /*for (b of bloque.hijos) {
-            console.log("poniendo es raiz: " + JSON.stringify(b));
-            b.esRaiz = true;
-            b.nivel = 1;
-          }*/
           if (bloque.icono == "=") {
             var index = app.variables.findIndex(function (bl) {
               return bl.id == bloque.id;
@@ -64,14 +55,8 @@ var app = new Vue({
             }
           }
         }
-        /*if (app.coneccionEliminada.output_id == app.nodeSelected) {
-          var bloquePadre = bloques.find(b => b.id == app.coneccionEliminada.input_id);
-          var input_class = app.coneccionEliminada.input_class.slice(-1);
-          bloquePadre.hijos.splice(input_class - 1, 1);
-        }*/
         return bloque.id != id;
       });
-      app.eliminadoReciente = false;
     });
     this.editor.on("connectionCreated", function (params) {
       //inpuyt node
@@ -121,13 +106,25 @@ var app = new Vue({
     this.editor.start();
   },
   methods: {
-    generarCodigo: function () {
+    generarCodigo: function (lang) {
       var codigo = "";
-      for (bloque of bloques) {
-        if (bloque.esRaiz) {
-          codigo += bloque.darPython() + " <br>";
+      var asignaciones = bloques.filter(b => b.icono == "=");
+      var resto = bloques.filter(b => b.icono != "=");
+      var generar = function(bloq){
+        var cod = ""
+        for (bloque of bloq) {
+          if (bloque.esRaiz) {
+            if (lang == 0)
+              cod += bloque.darPython();
+            else if (lang == 1)
+              cod += bloque.darSwift();
+            cod += " <br>";
+          }
         }
+        return cod;
       }
+      codigo = generar(asignaciones);
+      codigo += generar(resto);
       this.codigo = codigo;
     },
     cargar: function (event) {
@@ -242,9 +239,11 @@ var app = new Vue({
           break;
         case 12:
           data = darNodo(IteData);
+          componente = "Control";
           break;
         case 13:
           data = darNodo(ForData);
+          componente = "Control";
           break;
         case 14:
           data = darNodo(PrintData);
