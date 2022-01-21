@@ -29,6 +29,7 @@ var app = new Vue({
       app.nodeSelected = 0;
     });
     this.editor.on("connectionRemoved", function (params) {
+      console.log("coon removed: " + bloques.find(b => b.id == params.output_id).icono)
       const nodeInfo = app.editor.getNodeFromId(params.input_id);
       var bloquePadre = bloques.find(b => b.id == params.input_id);
       var input_class = params.input_class.slice(-1);
@@ -89,17 +90,15 @@ var app = new Vue({
         case "if":
         case "{}":
           bloqueOut.nivel = bloqueIn.nivel + 1;
+          var input_class = params.input_class.slice(-1);
+          if (input_class > bloqueIn.hijos.length + 1){
+            for(var i = bloqueIn.hijos.length; i < input_class - 1; i++){
+              bloqueIn.hijos.push(undefined)
+            }
+          }
         default:
           var input_class = params.input_class.slice(-1);
-          if (input_class == 1) {
-            bloqueIn.hijos.splice(0, 0, bloqueOut);
-          } else if (input_class == 2) {
-            console.log("splice 1");
-            bloqueIn.hijos.splice(1, 0, bloqueOut);
-          } else {
-            console.log("splice 2");
-            bloqueIn.hijos.splice(2, 0, bloqueOut);
-          }
+          bloqueIn.hijos.splice(input_class - 1, 0, bloqueOut)
           break;
       }
     });
@@ -140,15 +139,18 @@ var app = new Vue({
         })
         .then(function (data) {
           var parsed = JSON.parse(data.archivos[data.archivos.length - 1].data); // Logs the data to the console
-          bloques = parsed.bloques
+          bloques = parsed.bloques;
+          app.variables.splice(0);
           for (b of bloques) {
-            var dataBloque = app.bloques.find(bloque => bloque.icono == b.icono)
-            b.darValor = dataBloque.darValor
-            b.darPython = dataBloque.darPython
-            b.darSwift = dataBloque.darSwift
-            if (b.icono == "=")
-              b.asignar = dataBloque.asignar
-            b.hijos = b.hijos.map(bl => bloques.find(bloque => bloque.id == bl))
+            var dataBloque = app.bloques.find(bloque => bloque.icono == b.icono);
+            b.darValor = dataBloque.darValor;
+            b.darPython = dataBloque.darPython;
+            b.darSwift = dataBloque.darSwift;
+            if (b.icono == "="){
+              b.asignar = dataBloque.asignar;
+              app.variables.push(b);
+            }
+            b.hijos = b.hijos.map(bl => bloques.find(bloque => bloque.id == bl));
           }
           cargando = true
           indice_carga = 0
@@ -161,7 +163,7 @@ var app = new Vue({
     guardar: function (event) {
       var exportdata = this.editor.export();
       var bls = JSON.parse(JSON.stringify(bloques)).map(function (bloque) {
-        bloque.hijos = bloque.hijos.map(b => b.id);
+        bloque.hijos = bloque.hijos.map(b => (b === undefined || b === null) ? -1 : b.id);
         return bloque
       })
       console.log("guardando: " + JSON.stringify(exportdata))

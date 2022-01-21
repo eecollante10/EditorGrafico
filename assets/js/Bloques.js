@@ -37,6 +37,8 @@ const BlockData = {
   darPython: function () {
     var codigo = "";
     for (hijo of this.hijos) {
+      if (hijo === undefined)
+        continue
       codigo += indentacion(this.nivel);
       codigo += hijo.darPython() + "\n";
     }
@@ -45,6 +47,8 @@ const BlockData = {
   darSwift: function () {
     var codigo = "";
     for (hijo of this.hijos) {
+      if (hijo === undefined)
+        continue
       codigo += indentacion(this.nivel);
       codigo += hijo.darSwift() + "\n";
     }
@@ -153,14 +157,14 @@ var Variable = Vue.component("Variable", {
 const VariableData = {
   ...darBloque(-2, "Variable", "var", "Sostiene una de las variables asignadas con = para usar con otros bloques", 0, 1),
   valor: 0,
-  nombre : "",
+  nombre: "",
   darValor: function () {
     return this.valor;
   },
   darPython: function () {
     return this.nombre;
   },
-  darSwift: function(){
+  darSwift: function () {
     return this.nombre;
   }
 }
@@ -196,7 +200,7 @@ const NumeroData = {
   darPython: function () {
     return this.valor;
   },
-  darSwift: function(){
+  darSwift: function () {
     return this.valor;
   }
 }
@@ -212,7 +216,7 @@ var Texto = Vue.component("Texto", {
     var indice = cargando ? indice_carga : bloques.length - 1;
     if (cargando) indice_carga++;
     var bloque = bloques[indice];
-    
+
     return bloque;
   },
   template: `<div>
@@ -258,7 +262,7 @@ var Operador = Vue.component("Operador", {
   },
   template: `<div>
                       <h4>{{titulo}}</h4>
-                      <div><input type="text" readonly df-valor v-model="valor"></div>
+                      <div><input v-show="icono !== '{}'" type="text" readonly df-valor v-model="valor"></div>
                   </div>
                   `,
 });
